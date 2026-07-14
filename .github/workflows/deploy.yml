@@ -2,7 +2,7 @@ name: Deploy Web OS Desktop
 
 on:
   push:
-    branches: [ main ] # Triggers every time you commit to main
+    branches: [ main ]
 
 permissions:
   contents: write
@@ -14,14 +14,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js (Node 24)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version: 24  # Bumped to current standard
 
       - name: Install Dependencies
-        run: npm install
+        run: npm install    # This will generate the missing lockfile automatically on the runner
 
       - name: Build Desktop Layout
         run: npm run build
@@ -29,5 +28,5 @@ jobs:
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
-          folder: dist # Vite outputs compiled Svelte to the dist folder
+          folder: dist
           branch: gh-pages
