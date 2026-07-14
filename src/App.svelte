@@ -24,7 +24,7 @@
     >
       {#if win.type === 'webvm'}
         <iframe 
-          src="https://Lucasinator5000.github.io/webvm/" 
+          src="https://Lucasinator5000.github.io/VIZONwebvm/" 
           title="WebVM Engine"
           class="core-frame"
         ></iframe>
