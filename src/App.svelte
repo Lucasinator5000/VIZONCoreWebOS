@@ -2,17 +2,38 @@
   import Window from './components/Window.svelte';
   import Editor from './components/Editor.svelte';
 
-  // Windows list
+  // Windows configuration with dimensions and custom SVG icons
   let windows = [
-    { id: 'terminal', title: 'VIZON Linux Terminal', x: 60, y: 60, type: 'webvm', minimized: false, closed: false },
-    { id: 'editor', title: 'VIZON Code Workspace', x: 250, y: 150, type: 'editor', minimized: false, closed: false }
+    { 
+      id: 'terminal', 
+      title: 'Terminal Core', 
+      x: 60, 
+      y: 60, 
+      width: 700, 
+      height: 450, 
+      type: 'webvm', 
+      minimized: false, 
+      closed: false,
+      icon: 'https://lucasinator5000.github.io/VIZONwebvm/favicon.ico' // WebVM favicon
+    },
+    { 
+      id: 'editor', 
+      title: 'Code Workspace', 
+      x: 250, 
+      y: 150, 
+      width: 650, 
+      height: 400, 
+      type: 'editor', 
+      minimized: false, 
+      closed: false,
+      icon: 'https://cdn-icons-png.flaticon.com/512/1005/1005141.png' // Visual Code Icon style
+    }
   ];
 
   let activeWindowId = 'terminal';
 
   function bringToFront(id) {
     activeWindowId = id;
-    // Auto-unminimize when focused
     const win = windows.find(w => w.id === id);
     if (win) win.minimized = false;
     windows = [...windows];
@@ -40,6 +61,16 @@
 </script>
 
 <main class="desktop">
+  
+  <div class="desktop-icons">
+    {#each windows as app}
+      <button class="desktop-shortcut" on:dblclick={() => openApp(app.id)}>
+        <img src={app.icon} alt="" class="shortcut-icon" />
+        <span class="shortcut-label">{app.title}</span>
+      </button>
+    {/each}
+  </div>
+
   <div class="window-layer">
     {#each windows.filter(w => !w.closed) as win (win.id)}
       <Window 
@@ -47,7 +78,10 @@
         title={win.title} 
         bind:x={win.x} 
         bind:y={win.y}
+        bind:width={win.width}
+        bind:height={win.height}
         minimized={win.minimized}
+        icon={win.icon}
         active={activeWindowId === win.id}
         on:active={() => bringToFront(win.id)}
         on:close={handleClose}
@@ -68,6 +102,7 @@
 
   <div class="taskbar">
     <div class="start-btn">VIZON</div>
+    
     <div class="taskbar-apps">
       {#each windows as win}
         <button 
@@ -75,11 +110,14 @@
           class:active={activeWindowId === win.id && !win.minimized && !win.closed}
           class:closed={win.closed}
           on:click={() => openApp(win.id)}
+          title={win.title}
         >
-          {win.title.split(' ')[1] || win.title}
+          <img src={win.icon} alt="" class="taskbar-icon" />
+          <span class="taskbar-text">{win.title}</span>
         </button>
       {/each}
     </div>
+    
     <div class="system-time">
       {new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
     </div>
@@ -95,7 +133,45 @@
     overflow: hidden;
     display: flex;
     flex-direction: column;
+    user-select: none;
   }
+  
+  /* Desktop Icon Shortcuts grid */
+  .desktop-icons {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    z-index: 5;
+  }
+  .desktop-shortcut {
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 80px;
+    cursor: pointer;
+    color: #fff;
+    gap: 8px;
+    padding: 8px;
+    border-radius: 6px;
+  }
+  .desktop-shortcut:hover {
+    background: rgba(255, 255, 255, 0.1);
+  }
+  .shortcut-icon {
+    width: 36px;
+    height: 36px;
+  }
+  .shortcut-label {
+    font-size: 11px;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    text-align: center;
+  }
+
   .window-layer {
     flex: 1;
     position: relative;
@@ -112,14 +188,14 @@
   /* Taskbar CSS Design */
   .taskbar {
     height: 48px;
-    background: rgba(30, 30, 30, 0.85);
+    background: rgba(15, 15, 20, 0.85);
     backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
     display: flex;
     align-items: center;
     padding: 0 10px;
     gap: 12px;
-    z-index: 99999; /* Ensure taskbar sits above all windows */
+    z-index: 99999;
   }
   .start-btn {
     background: #007acc;
@@ -128,7 +204,7 @@
     padding: 6px 14px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
   }
   .start-btn:hover {
     background: #0098ff;
@@ -139,31 +215,37 @@
     gap: 8px;
   }
   .taskbar-item {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    color: #ccc;
-    padding: 6px 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #aaa;
+    padding: 4px 12px;
     border-radius: 4px;
     cursor: pointer;
-    font-size: 13px;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     transition: all 0.2s;
   }
   .taskbar-item:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.08);
     color: #fff;
   }
   .taskbar-item.active {
-    background: #007acc;
+    background: rgba(0, 122, 204, 0.2);
     color: #fff;
     border-color: #007acc;
   }
   .taskbar-item.closed {
-    opacity: 0.4;
-    border-style: dashed;
+    opacity: 0.3;
+  }
+  .taskbar-icon {
+    width: 16px;
+    height: 16px;
   }
   .system-time {
-    color: #888;
-    font-size: 13px;
+    color: #666;
+    font-size: 12px;
     padding-right: 10px;
   }
 </style>
