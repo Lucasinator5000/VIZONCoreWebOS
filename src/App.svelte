@@ -24,7 +24,7 @@
     >
       {#if win.type === 'webvm'}
         <iframe 
-          src="https://YOUR_GITHUB_USERNAME.github.io/webvm/" 
+          src="https://Lucasinator5000.github.io/webvm/" 
           title="WebVM Engine"
           class="core-frame"
         ></iframe>
