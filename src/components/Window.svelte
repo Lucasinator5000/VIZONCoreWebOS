@@ -1,252 +1,136 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { createEventDispatcher, onMount } from 'svelte';
   const dispatch = createEventDispatcher();
 
-  export let title = "Window";
   export let id;
-  export let x = 100;
-  export let y = 100;
-  export let width = 650;  // Added width control
-  export let height = 450; // Added height control
+  export let title;
+  export let icon;
+  export let accentColor;
+  export let bgGradient;
   export let active = false;
   export let minimized = false;
-  export let icon = "";    // Custom window icon
+  export let width = 600;
+  export let height = 400;
+  
+  let x = 60 + (Math.random() * 100);
+  let y = 60 + (Math.random() * 100);
+  let isMaximized = false;
+  let prevStyle = null;
 
   let isDragging = false;
   let isResizing = false;
-  let resizeType = ''; // 'r' (right), 'b' (bottom), 'br' (bottom-right)
-  let isMaximised = false;
-  
-  let prevX = x;
-  let prevY = y;
-  let prevWidth = width;
-  let prevHeight = height;
+  let startX, startY, startWidth, startHeight, startLeft, startTop;
 
-  // Window Dragging Logic
-  function startDrag(event) {
-    if (isMaximised) return;
+  function handleHeaderMouseDown(e) {
+    if (e.target.closest('button')) return;
     isDragging = true;
     dispatch('active');
-    window.addEventListener('pointermove', drag);
-    window.addEventListener('pointerup', stopDrag);
+    startX = e.clientX;
+    startY = e.clientY;
+    startLeft = x;
+    startTop = y;
+    e.preventDefault();
   }
 
-  function drag(event) {
-    if (!isDragging) return;
-    x += event.movementX;
-    y += event.movementY;
-  }
-
-  function stopDrag() {
-    isDragging = false;
-    window.removeEventListener('pointermove', drag);
-    window.removeEventListener('pointerup', stopDrag);
-  }
-
-  // Window Resizing Logic
-  function startResize(event, type) {
-    if (isMaximised) return;
-    event.preventDefault();
-    event.stopPropagation();
+  function handleResizeMouseDown(e) {
     isResizing = true;
-    resizeType = type;
     dispatch('active');
-    window.addEventListener('pointermove', resize);
-    window.addEventListener('pointerup', stopResize);
+    startX = e.clientX;
+    startY = e.clientY;
+    startWidth = width;
+    startHeight = height;
+    e.preventDefault();
   }
 
-  function resize(event) {
-    if (!isResizing) return;
-    
-    const minWidth = 300;
-    const minHeight = 200;
+  onMount(() => {
+    const handleMouseMove = (e) => {
+      if (isDragging) {
+        x = Math.max(0, startLeft + (e.clientX - startX));
+        y = Math.max(0, startTop + (e.clientY - startY));
+      }
+      if (isResizing) {
+        width = Math.max(280, startWidth + (e.clientX - startX));
+        height = Math.max(200, startHeight + (e.clientY - startY));
+      }
+    };
 
-    if (resizeType === 'r' || resizeType === 'br') {
-      width = Math.max(minWidth, width + event.movementX);
-    }
-    if (resizeType === 'b' || resizeType === 'br') {
-      height = Math.max(minHeight, height + event.movementY);
-    }
-  }
+    const handleMouseUp = () => {
+      isDragging = false;
+      isResizing = false;
+    };
 
-  function stopResize() {
-    isResizing = false;
-    window.removeEventListener('pointermove', resize);
-    window.removeEventListener('pointerup', stopResize);
-  }
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
 
-  function toggleMaximise() {
-    if (isMaximised) {
-      x = prevX;
-      y = prevY;
-      width = prevWidth;
-      height = prevHeight;
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  });
+
+  function toggleMaximize() {
+    if (isMaximized) {
+      x = prevStyle.x;
+      y = prevStyle.y;
+      width = prevStyle.width;
+      height = prevStyle.height;
+      isMaximized = false;
     } else {
-      prevX = x;
-      prevY = y;
-      prevWidth = width;
-      prevHeight = height;
+      prevStyle = { x, y, width, height };
       x = 0;
       y = 0;
       width = window.innerWidth;
-      height = window.innerHeight - 48; // Account for taskbar
+      height = window.innerHeight - 60; // Leave space for taskbar
+      isMaximized = true;
     }
-    isMaximised = !isMaximised;
-  }
-
-  function closeWindow() {
-    dispatch('close', { id });
-  }
-
-  function minimizeWindow() {
-    dispatch('minimize', { id });
   }
 </script>
 
 <div 
-  class="window" 
-  class:active 
-  class:maximised={isMaximised}
-  style="
-    transform: translate3d({x}px, {y}px, 0); 
-    width: {isMaximised ? '100vw' : width + 'px'};
-    height: {isMaximised ? 'calc(100vh - 48px)' : height + 'px'};
-    display: {minimized ? 'none' : 'flex'};
-  "
-  on:pointerdown={() => dispatch('active')}
+  class="absolute glass bg-slate-900/90 border border-slate-700/50 flex flex-col overflow-hidden pointer-events-auto select-none transition-all duration-150 shadow-2xl"
+  class:rounded-2xl={!isMaximized}
+  class:rounded-none={isMaximized}
+  class:hidden={minimized}
+  class:border-slate-600={active}
+  style="width: {width}px; height: {height}px; left: {x}px; top: {y}px; z-index: {active ? 1000 : 100};"
+  on:mousedown={() => dispatch('active')}
 >
-  <div class="window-header" on:pointerdown={startDrag}>
-    <div class="window-title-group">
-      {#if icon}
-        <img src={icon} class="window-icon" alt="" />
-      {/if}
-      <span class="title">{title}</span>
+  <div 
+    class="h-11 px-4 flex items-center justify-between cursor-move bg-gradient-to-r {bgGradient} border-b border-slate-800/60 shrink-0"
+    on:mousedown={handleHeaderMouseDown}
+  >
+    <div class="flex items-center space-x-2.5 pointer-events-none">
+      <span class={accentColor}>
+        <i data-lucide={icon} class="w-4 h-4"></i>
+      </span>
+      <span class="text-xs font-semibold tracking-wide text-slate-200 select-none">{title}</span>
     </div>
-    <div class="window-controls">
-      <button class="control-btn min" on:click|stopPropagation={minimizeWindow}>–</button>
-      <button class="control-btn max" on:click|stopPropagation={toggleMaximise}>&#9633;</button>
-      <button class="control-btn close" on:click|stopPropagation={closeWindow}>×</button>
+
+    <div class="flex items-center space-x-1.5">
+      <button on:click={() => dispatch('minimize')} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-colors">
+        <i data-lucide="minus" class="w-3 h-3"></i>
+      </button>
+      <button on:click={toggleMaximize} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 flex items-center justify-center transition-colors">
+        <i data-lucide="square" class="w-2.5 h-2.5"></i>
+      </button>
+      <button on:click={() => dispatch('close')} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition-colors">
+        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+      </button>
     </div>
   </div>
-  
-  <div class="window-content">
-    {#if isDragging || isResizing}
-      <div class="drag-overlay"></div>
-    {/if}
+
+  <div class="flex-1 overflow-auto relative bg-slate-950/40 text-sm select-text flex flex-col">
     <slot />
   </div>
 
-  {#if !isMaximised}
-    <div class="resize-handle r" on:pointerdown={(e) => startResize(e, 'r')}></div>
-    <div class="resize-handle b" on:pointerdown={(e) => startResize(e, 'b')}></div>
-    <div class="resize-handle br" on:pointerdown={(e) => startResize(e, 'br')}></div>
+  {#if !isMaximized}
+    <div 
+      class="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize z-[1000] flex items-end justify-end p-0.5 pointer-events-auto"
+      on:mousedown={handleResizeMouseDown}
+    >
+      <svg class="text-slate-600/50" width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
+        <path d="M6 0h2v2H6zm0 4h2v2H6zm-4 2h2v2H2zm4 0h2v2H6z"/>
+      </svg>
+    </div>
   {/if}
 </div>
-
-<style>
-  .window {
-    position: absolute;
-    background: #2d2d30;
-    border-radius: 6px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    border: 1px solid #444;
-    z-index: 1;
-  }
-  .window.active {
-    z-index: 100;
-    border-color: #007acc;
-    box-shadow: 0 10px 35px rgba(0, 122, 204, 0.3);
-  }
-  .window.maximised {
-    border-radius: 0;
-    border: none;
-  }
-  .window-header {
-    background: #252526;
-    color: #ccc;
-    padding: 8px 12px;
-    cursor: move;
-    user-select: none;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #1e1e1e;
-  }
-  .window-title-group {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .window-icon {
-    width: 16px;
-    height: 16px;
-  }
-  .window-content {
-    flex: 1;
-    position: relative;
-    background: #1e1e1e;
-  }
-  .drag-overlay {
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 9999;
-    background: transparent;
-  }
-  .window-controls {
-    display: flex;
-    gap: 6px;
-  }
-  .control-btn {
-    background: #3c3c3c;
-    border: none;
-    color: #fff;
-    width: 22px;
-    height: 22px;
-    border-radius: 4px;
-    font-size: 12px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .control-btn:hover {
-    background: #505050;
-  }
-  .control-btn.close:hover {
-    background: #e81123;
-  }
-
-  /* Resize Grab Zones */
-  .resize-handle {
-    position: absolute;
-    background: transparent;
-    z-index: 1000;
-  }
-  .resize-handle.r {
-    top: 0;
-    right: 0;
-    width: 6px;
-    height: 100%;
-    cursor: e-resize;
-  }
-  .resize-handle.b {
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 6px;
-    cursor: s-resize;
-  }
-  .resize-handle.br {
-    bottom: 0;
-    right: 0;
-    width: 12px;
-    height: 12px;
-    cursor: se-resize;
-  }
-</style>
