@@ -2,7 +2,7 @@
   import { createEventDispatcher, onMount } from 'svelte';
   const dispatch = createEventDispatcher();
 
-  export let id;
+  export let id; // Kept and used inside active state dispatching
   export let title;
   export let icon;
   export let accentColor;
@@ -24,7 +24,7 @@
   function handleHeaderMouseDown(e) {
     if (e.target.closest('button')) return;
     isDragging = true;
-    dispatch('active');
+    dispatch('active', { id });
     startX = e.clientX;
     startY = e.clientY;
     startLeft = x;
@@ -34,7 +34,7 @@
 
   function handleResizeMouseDown(e) {
     isResizing = true;
-    dispatch('active');
+    dispatch('active', { id });
     startX = e.clientX;
     startY = e.clientY;
     startWidth = width;
@@ -80,7 +80,7 @@
       x = 0;
       y = 0;
       width = window.innerWidth;
-      height = window.innerHeight - 60; // Leave space for taskbar
+      height = window.innerHeight - 60;
       isMaximized = true;
     }
   }
@@ -93,7 +93,7 @@
   class:hidden={minimized}
   class:border-slate-600={active}
   style="width: {width}px; height: {height}px; left: {x}px; top: {y}px; z-index: {active ? 1000 : 100};"
-  on:mousedown={() => dispatch('active')}
+  on:mousedown={() => dispatch('active', { id })}
 >
   <div 
     class="h-11 px-4 flex items-center justify-between cursor-move bg-gradient-to-r {bgGradient} border-b border-slate-800/60 shrink-0"
@@ -108,13 +108,13 @@
 
     <div class="flex items-center space-x-1.5">
       <button on:click={() => dispatch('minimize')} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-amber-500/20 text-slate-400 hover:text-amber-400 flex items-center justify-center transition-colors">
-        <i data-lucide="minus" class="w-3 h-3"></i>
+        –
       </button>
       <button on:click={toggleMaximize} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-400 flex items-center justify-center transition-colors">
-        <i data-lucide="square" class="w-2.5 h-2.5"></i>
+        &#9633;
       </button>
       <button on:click={() => dispatch('close')} class="w-5 h-5 rounded-full bg-slate-800/80 hover:bg-rose-500/20 text-slate-400 hover:text-rose-400 flex items-center justify-center transition-colors">
-        <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        ×
       </button>
     </div>
   </div>
