@@ -1,16 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="h-full select-none">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Web OS Desktop</title>
+    <title>VIZON OS</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              os: {
+                bg: '#0f172a',
+                window: 'rgba(15, 23, 42, 0.75)',
+                taskbar: 'rgba(15, 23, 42, 0.65)',
+                accent: '#3b82f6',
+                accentLight: '#60a5fa'
+              }
+            },
+            boxShadow: {
+              'window': '0 20px 25px -5px rgb(0 0 0 / 0.5), 0 8px 10px -6px rgb(0 0 0 / 0.5)',
+              'glow': '0 0 15px rgba(59, 130, 246, 0.5)'
+            }
+          }
+        }
+      }
+    </script>
+
     <style>
-      * { box-sizing: border-box; margin: 0; padding: 0; }
-      body, html { width: 100%; height: 100%; overflow: hidden; font-family: sans-serif; }
+      /* Smooth glassmorphic effect */
+      .glass {
+        background: rgba(15, 23, 42, 0.75);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+      }
     </style>
   </head>
-  <body>
-    <div id="app"></div>
+  <body class="h-full bg-[#0f172a] text-slate-100 overflow-hidden">
+    <div id="app" class="h-full"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>
